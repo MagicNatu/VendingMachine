@@ -1,0 +1,385 @@
+/* Tests the functionality of the VendingMachine application with a coverage of 98,6 %
+ * */
+ 
+package VendingMachine;
+
+import static org.junit.Assert.*; 
+
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintStream;
+import java.io.PrintWriter;
+import java.io.Reader;
+import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+
+import javax.swing.JOptionPane;
+
+import junit.framework.Assert;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
+import org.omg.CORBA.portable.InputStream;
+
+//import VendingMachine.VendingMachine.SelectionMenu;
+
+//import VendingMachine.VendingMachine.SelectionMenu;
+
+public class VendingMachine_Test {
+
+	VendingMachine ven = new VendingMachine();
+	DrinkChamber drink = new DrinkChamber();
+	
+	final ByteArrayOutputStream outContent = new ByteArrayOutputStream();
+	final ByteArrayOutputStream errContent = new ByteArrayOutputStream();
+	final ByteArrayOutputStream errContent2 = new ByteArrayOutputStream();
+	final BufferedReader inRead = new BufferedReader(new InputStreamReader(System.in));
+	
+	@Before
+	public void setUp() {
+		
+		System.setOut(new PrintStream(outContent));
+		System.setErr(new PrintStream(errContent));
+		System.setIn(System.in);
+		ven = new VendingMachine();
+		ven.powerUpVendingMechine();
+	}
+	
+	@Rule
+	public ExpectedException expectedException = ExpectedException.none();
+	
+	@Test
+	public void TestDisplayMenu(){
+		ven.displayMenu();
+		
+		String x = outContent.toString();
+		assertEquals(x,"Please select your drink from the menu:\n"+
+        "\t" + "COLA" + "\t\tprice: [" + ven.drinkChamber.cola.price + "] euro" + "\tstill have: [" + ven.drinkChamber.getColaCount().toString() + "]can\n" +
+                "\t" + "COFFEE" + "\t\tprice: [" + ven.drinkChamber.coffee.price + "] euro" + "\tstill have: [" + ven.drinkChamber.getCoffeeCount().toString() + "]can\n" +
+                "\t" + "ORANGE_JUICE" + "\tprice: [" + ven.drinkChamber.oj.price + "] euro" + "\tstill have: [" +  ven.drinkChamber.getOJCount().toString()+ "]can\n" +
+                "\t" + "QUIT\n\n" +
+                "Enter:"); 
+	}
+	
+	@Test
+	public void TestTakeColaSuccess(){
+		ven.drinkChamber.takeACola();
+		assertEquals(9,(ven.drinkChamber.getColaCount().intValue()));
+	}
+	@Test
+	 public void TestTakeColaFail(){
+		for (int i = 0; i <= 10; i++){
+			ven.drinkChamber.takeACola();
+		}
+		String x = errContent.toString();
+		Assert.assertTrue(x.contains("cola"));
+		
+	} 
+	
+	@Test
+	public void TestTakeCoffeeSuccess(){
+		ven.drinkChamber.takeACoffee();
+		assertEquals(9,(ven.drinkChamber.getCoffeeCount().intValue()));
+	}
+	@Test
+	public void TestTakeCoffeeFail(){
+		for (int i = 0; i <= 10; i++){
+			ven.drinkChamber.takeACoffee();
+		}
+		String x = errContent.toString();
+		Assert.assertTrue(x.contains("coffee"));
+	}
+	@Test
+	public void TestTakeOJSuccess(){
+		ven.drinkChamber.takeAOJ();
+		ven.drinkChamber.takeAOJ();
+		assertEquals(8,(ven.drinkChamber.getOJCount().intValue()));
+	}
+	
+	@Test
+	public void TestTakeOJFail(){
+		for (int i = 0; i <= 10; i++){
+			ven.drinkChamber.takeAOJ();
+		}
+		String x = errContent.toString();
+		Assert.assertTrue(x.contains("orange juice"));
+	}
+	
+	
+	@SuppressWarnings("deprecation")
+	@Test
+	public void TestAmountPaid(){
+		ven.setAmountPaid(2.0);
+		assertEquals(2.0, ven.amountPaid, 1e-15);
+	}
+	
+	@SuppressWarnings("deprecation")
+	@Test
+	public void TestCalculateOneEuro(){
+		int[] coinList = new int[4];
+		coinList = ven.calculateReturningCoins(1);
+		assertEquals(coinList[0], 0.0, 1e-15);
+		assertEquals(coinList[1], 1.0, 1e-15);
+		assertEquals(coinList[2], 0.0, 1e-15);
+		assertEquals(coinList[3], 0.0, 1e-15);
+	}
+	@Test
+	public void TestCalculateTwoEuro(){
+		int[] coinList = new int[4];
+		coinList = ven.calculateReturningCoins(2);
+		assertEquals(coinList[0], 1.0, 1e-15);
+		assertEquals(coinList[1], 0.0, 1e-15);
+		assertEquals(coinList[2], 0.0, 1e-15);
+		assertEquals(coinList[3], 0.0, 1e-15);
+	}
+	@Test
+	public void TestCalculateFiftyCent(){
+		int[] coinList = new int[4];
+		coinList = ven.calculateReturningCoins(0.50);
+		assertEquals(coinList[0], 0.0, 1e-15);
+		assertEquals(coinList[1], 0.0, 1e-15);
+		assertEquals(coinList[2], 1.0, 1e-15);
+		assertEquals(coinList[3], 0.0, 1e-15);
+	}
+	@Test
+	public void TestCalculateTwentyCent(){
+		int[] coinList = new int[4];
+		coinList = ven.calculateReturningCoins(0.20);
+		assertEquals(coinList[0], 0.0, 1e-15);
+		assertEquals(coinList[1], 0.0, 1e-15);
+		assertEquals(coinList[2], 0.0, 1e-15);
+		assertEquals(coinList[3], 1.0, 1e-15);
+		
+	}
+	@Test
+	public void TestDisplayReturningOneE(){
+		int[] coinList = ven.calculateReturningCoins(1);
+		
+    	ven.displayReturningCoins(1); 
+    	
+    	String output = "Your Change is \n" +
+    	"  " + coinList[0] +" x 2Euro\n" +
+    	"  " + coinList[1] +" x 1Euro\n" +
+    	"  " + coinList[2] +" x 50Cent\n" + 
+    	"  " + coinList[3] +" x 20Cent\n";
+    	
+    	assertEquals(outContent.toString(), output);
+	}
+	@Test
+	public void TestDisplayReturningTwoE(){
+		int[] coinList = ven.calculateReturningCoins(2);
+		
+    	ven.displayReturningCoins(2); 
+    	
+    	String output = "Your Change is \n" +
+    	"  " + coinList[0] +" x 2Euro\n" +
+    	"  " + coinList[1] +" x 1Euro\n" +
+    	"  " + coinList[2] +" x 50Cent\n" + 
+    	"  " + coinList[3] +" x 20Cent\n";
+    	
+    	assertEquals(outContent.toString(), output);
+	
+	}
+	@Test
+	public void TestDisplayReturningFiftyC(){
+		int[] coinList = ven.calculateReturningCoins(0.50);
+		
+    	ven.displayReturningCoins(0.50); 
+    	
+    	String output = "Your Change is \n" +
+    	"  " + coinList[0] +" x 2Euro\n" +
+    	"  " + coinList[1] +" x 1Euro\n" +
+    	"  " + coinList[2] +" x 50Cent\n" + 
+    	"  " + coinList[3] +" x 20Cent\n";
+    	
+    	assertEquals(outContent.toString(), output);
+	}
+	@Test
+	public void TestDisplayReturningTwentyC(){
+		int[] coinList = ven.calculateReturningCoins(0.20);
+		
+    	ven.displayReturningCoins(0.20); 
+    	
+    	String output = "Your Change is \n" +
+    	"  " + coinList[0] +" x 2Euro\n" +
+    	"  " + coinList[1] +" x 1Euro\n" +
+    	"  " + coinList[2] +" x 50Cent\n" + 
+    	"  " + coinList[3] +" x 20Cent\n";
+    	
+    	assertEquals(outContent.toString(), output);
+	}
+	@Test
+	public void TestCalculateChange20c(){
+		double AddedAmount = ven.amountPaid + 0.20;
+		ven.calculateChange(3.0, "TC");
+		assertEquals(AddedAmount, ven.amountPaid, 1e-15);
+	}
+	@Test
+	public void TestCalculateChange50c(){
+		double AddedAmount = ven.amountPaid + 0.50;
+		ven.calculateChange(3.0, "FC");
+		assertEquals(AddedAmount, ven.amountPaid, 1e-15);
+	}
+	@Test
+	public void TestCalculateChange1e(){
+		double AddedAmount = ven.amountPaid + 1.0;
+		ven.calculateChange(3.0, "OE");
+		assertEquals(AddedAmount, ven.amountPaid, 1e-15);
+	}
+	@Test
+	public void TestCalculateChange2e(){
+		double AddedAmount = ven.amountPaid + 2;
+		ven.calculateChange(3.0, "TE");
+		assertEquals(AddedAmount, ven.amountPaid, 1e-15);
+	}
+	@Test
+	public void TestCalculateChangeError(){
+		ven.calculateChange(3.0, "TCdf");
+		String expectedErrormsg = "Wrong coin type!";
+		assertEquals(errContent.toString(), expectedErrormsg);
+	}
+	@Test
+	public void TestCaptureMoneySuccess() throws IOException{
+	        String CoinInput = "TE TE"; //the line we will try to read: Inputting 4 euro
+	        java.io.InputStream stream = new ByteArrayInputStream((CoinInput+"\n").getBytes(StandardCharsets.UTF_8)); //this stream will output the example string
+	    	BufferedReader inReadd = new BufferedReader(new InputStreamReader(stream));
+	        java.io.InputStream stdin = System.in; //save the standard in to restore it later
+	        System.setIn(stream); //set the standard in to the mocked stream
+	        ven.captureMoney("COLA", 3.0);
+	        String ExpectedOutput = "Your change is: 1.0 EURO\nThank you for your business, you see again!\n";
+	        assertEquals(ExpectedOutput, outContent.toString()); //check if the method works
+	        System.setIn(stdin);//restore the stardard in
+	
+	}
+	@Test
+	public void TestCaptureTooLittleMoney() throws IOException{
+	        String CoinInput = "TE"; //the line we will try to read: Inputting only Two euro
+	        java.io.InputStream stream = new ByteArrayInputStream((CoinInput+"\n").getBytes(StandardCharsets.UTF_8)); //this stream will output the example string
+	    	BufferedReader inReadd = new BufferedReader(new InputStreamReader(stream));
+	        java.io.InputStream stdin = System.in; //save the standard in to restore it later
+	        System.setIn(stream); //set the standard in to the mocked stream
+	        ven.captureMoney("COLA", 3.0); 
+	        String ExpectedOutput = "You did not put enough money, please put in more coins.";
+	        assertEquals(ExpectedOutput, outContent.toString());
+	        
+	}
+	/*@Test (expected = IOException.class)
+	public void TestCaptureNull() throws IOException{
+	        String CoinInput = null; //the line we will try to read: Inputting null
+	        assertNull(CoinInput);
+	        java.io.InputStream stream = new ByteArrayInputStream((CoinInput+"\n").getBytes(StandardCharsets.UTF_8)); //this stream will output the example string
+	    	BufferedReader inReadd = new BufferedReader(new InputStreamReader(stream));
+	        java.io.InputStream stdin = System.in; //save the standard in to restore it later
+	        System.setIn(stream); //set the standard in to the mocked stream
+	        ven.captureMoney("COLA", 3.0);
+	        String ExpectedOutput = "Error in reading input.";
+	        expectedException.expect(IOException.class);
+	        expectedException.expectMessage(ExpectedOutput);
+	  //      assertEquals(ExpectedOutput, outContent.toString());
+	} */
+	
+	
+	@Test
+	public void TestColaSelection(){
+		ven.processSelection("COLA", true);
+		String ExpectedOutput = "The price is 3.00 Euro, please insert a coin.\n";
+		assertEquals(ExpectedOutput, outContent.toString());
+		ven.processSelection("COLA", false);
+		assertEquals("ERROR", errContent.toString());
+		
+	}
+	@Test
+	public void TestCoffeeSelection(){
+		ven.processSelection("COFFEE", true);
+		String ExpectedOutput = "The price is 2.50 Euro, please insert a coin.\n";
+		assertEquals(ExpectedOutput, outContent.toString());
+		ven.processSelection("COFFEE", false);
+		assertEquals("ERROR", errContent.toString());
+	}
+	@Test
+	public void testTakeOJ(){
+		ven.processSelection("ORANGE_JUICE", true);
+		String ExpectedOutput = "The price is " + ven.drinkChamber.oj.price + " Euro, please insert a coin.\n";
+		assertEquals(ExpectedOutput, outContent.toString());
+		ven.processSelection("ORANGE_JUICE", false);
+		assertEquals("ERROR", errContent.toString());
+	}
+	
+	@Test
+	public void TestCaptureInputandRespond(){
+		String DrinkInput = "COLA"; //the line we will try to read: Inputting only Two euro
+        java.io.InputStream stream = new ByteArrayInputStream((DrinkInput+"\n").getBytes(StandardCharsets.UTF_8)); //this stream will output the example string
+    	BufferedReader inReadd = new BufferedReader(new InputStreamReader(stream));
+        java.io.InputStream stdin = System.in; //save the standard in to restore it later
+        System.setIn(stream); //set the standard in to the mocked stream
+        Boolean b = ven.captureInputAndRespond();
+        String ExpectedOutput = "You have selected " + "COLA" + "\n";
+        Assert.assertTrue(outContent.toString().contains(ExpectedOutput));
+        assertEquals(b, false);
+	}
+	@Test
+	public void TestCaptureInputandRespond2(){
+		String DrinkInput = "COFFEE"; //the line we will try to read: Inputting only Two euro
+        java.io.InputStream stream = new ByteArrayInputStream((DrinkInput+"\n").getBytes(StandardCharsets.UTF_8)); //this stream will output the example string
+    	BufferedReader inReadd = new BufferedReader(new InputStreamReader(stream));
+        java.io.InputStream stdin = System.in; //save the standard in to restore it later
+        System.setIn(stream); //set the standard in to the mocked stream
+        Boolean b = ven.captureInputAndRespond();
+        String ExpectedOutput = "You have selected " + "COFFEE" + "\n";
+        Assert.assertTrue(outContent.toString().contains(ExpectedOutput));
+        assertEquals(b, false);
+
+	}
+	@Test
+	public void TestCaptureInputandRespond3(){
+		String DrinkInput = "ORANGE_JUICE"; //the line we will try to read: Inputting only Two euro
+        java.io.InputStream stream = new ByteArrayInputStream((DrinkInput+"\n").getBytes(StandardCharsets.UTF_8)); //this stream will output the example string
+    	BufferedReader inReadd = new BufferedReader(new InputStreamReader(stream));
+        java.io.InputStream stdin = System.in; //save the standard in to restore it later
+        System.setIn(stream); //set the standard in to the mocked stream
+        Boolean b = ven.captureInputAndRespond();
+        String ExpectedOutput = "You have selected " + "ORANGE_JUICE" + "\n";
+        Assert.assertTrue(outContent.toString().contains(ExpectedOutput));
+        assertEquals(b, false);
+	}
+	@Test
+	public void TestCaptureInputandRespond4(){
+		String DrinkInput = "QUIT"; //the line we will try to read: Inputting only Two euro
+        java.io.InputStream stream = new ByteArrayInputStream((DrinkInput+"\n").getBytes(StandardCharsets.UTF_8)); //this stream will output the example string
+    	BufferedReader inReadd = new BufferedReader(new InputStreamReader(stream));
+        java.io.InputStream stdin = System.in; //save the standard in to restore it later
+        System.setIn(stream); //set the standard in to the mocked stream
+        Boolean b = ven.captureInputAndRespond();
+        String ExpectedOutput = "Exiting...BYE!";
+        Assert.assertTrue(outContent.toString().contains(ExpectedOutput));
+        assertEquals(b, true);
+	}
+	@Test
+	public void TestCaptureInputandRespond5(){
+		String DrinkInput = "fdff"; //the line we will try to read: Inputting only Two euro
+        java.io.InputStream stream = new ByteArrayInputStream((DrinkInput+"\n").getBytes(StandardCharsets.UTF_8)); //this stream will output the example string
+    	BufferedReader inReadd = new BufferedReader(new InputStreamReader(stream));
+        java.io.InputStream stdin = System.in; //save the standard in to restore it later
+        System.setIn(stream); //set the standard in to the mocked stream
+        Boolean b = ven.captureInputAndRespond();
+        String ExpectedOutput = "Wrong input try again!!!\n\n";
+        Assert.assertTrue(outContent.toString().contains(ExpectedOutput));
+        assertEquals(b, false);
+	}
+	
+	@After
+	public void restoreStreams() {
+		//System.setOut(null);
+	    System.setOut(System.out);
+	    System.setErr(System.err);
+	    System.setIn(System.in);
+	}
+
+}
